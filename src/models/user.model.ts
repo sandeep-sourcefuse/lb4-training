@@ -1,6 +1,18 @@
-import {Entity, model, property} from '@loopback/repository';
+import {belongsTo, Entity, model, property} from '@loopback/repository';
+import {Role} from '.';
 
-@model({settings: {strict: false}})
+@model({
+  settings: {
+    foreignKeys: {
+      fk_user_role: {
+        name: 'fk_user_role',
+        entity: 'Role',
+        entityKey: 'role_id',
+        foreignKey: 'role',
+      }
+    },
+  }
+})
 export class User extends Entity {
   @property({
     type: 'number',
@@ -36,10 +48,7 @@ export class User extends Entity {
   })
   phone?: string;
 
-  @property({
-    type: 'number',
-    required: true,
-  })
+  @belongsTo(() => Role, {keyTo: 'role_id', name: 'user_role'})
   role: number;
 
   @property({
