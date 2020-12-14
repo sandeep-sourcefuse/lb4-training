@@ -8,10 +8,11 @@ import {
 } from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import * as dotenv from 'dotenv';
+import {AuthenticationComponent, Strategies} from 'loopback4-authentication';
 import path from 'path';
+import {BearerTokenVerifyProvider} from './providers/bearer-token-verify.provider';
 import {LogErrorProvider} from './providers/logger-error.provider';
 import {MySequence} from './sequence';
-import {AllowedOriginSequence} from './sequence/allowed-origin.sequence';
 import {LoggerBindings} from './services/logger.namespace';
 import {WinstonLoggerService} from './services/logger.service';
 dotenv.config();
@@ -27,7 +28,6 @@ export class LbAppApplication extends BootMixin(
 
     // Set up the custom sequence
     this.sequence(MySequence);
-    this.sequence(AllowedOriginSequence);
 
     this.bind(LoggerBindings.LOGGER).toClass(WinstonLoggerService);
     this.bind(RestBindings.SequenceActions.LOG_ERROR).toProvider(LogErrorProvider);
@@ -40,6 +40,9 @@ export class LbAppApplication extends BootMixin(
       path: '/explorer',
     });
     this.component(RestExplorerComponent);
+
+    this.component(AuthenticationComponent);
+    this.bind(Strategies.Passport.BEARER_TOKEN_VERIFIER).toProvider(BearerTokenVerifyProvider);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here

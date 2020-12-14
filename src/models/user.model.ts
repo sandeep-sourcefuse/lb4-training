@@ -66,6 +66,17 @@ export class User extends Entity {
   })
   modified_at?: string;
 
+  @property({
+    type: 'string',
+    required: true,
+  })
+  username: string;
+
+  @property({
+    type: 'string',
+  })
+  password?: string;
+
   // Define well-known properties here
 
   // Indexer property to allow additional data
