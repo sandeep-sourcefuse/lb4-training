@@ -9,6 +9,10 @@ import {
 import {ServiceMixin} from '@loopback/service-proxy';
 import * as dotenv from 'dotenv';
 import {AuthenticationComponent, Strategies} from 'loopback4-authentication';
+import {
+  AuthorizationBindings,
+  AuthorizationComponent
+} from 'loopback4-authorization';
 import path from 'path';
 import {BearerTokenVerifyProvider} from './providers/bearer-token-verify.provider';
 import {LogErrorProvider} from './providers/logger-error.provider';
@@ -16,6 +20,7 @@ import {MySequence} from './sequence';
 import {LoggerBindings} from './services/logger.namespace';
 import {WinstonLoggerService} from './services/logger.service';
 dotenv.config();
+
 
 
 export {ApplicationConfig};
@@ -43,6 +48,11 @@ export class LbAppApplication extends BootMixin(
 
     this.component(AuthenticationComponent);
     this.bind(Strategies.Passport.BEARER_TOKEN_VERIFIER).toProvider(BearerTokenVerifyProvider);
+
+    this.bind(AuthorizationBindings.CONFIG).to({
+      allowAlwaysPaths: ['/explorer'],
+    });
+    this.component(AuthorizationComponent);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here

@@ -13,7 +13,10 @@ import {
   put,
   requestBody
 } from '@loopback/rest';
+import * as crypto from "crypto";
+import * as jwt from 'jsonwebtoken';
 import {authenticate, STRATEGY} from 'loopback4-authentication';
+import {authorize} from 'loopback4-authorization';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
 
@@ -22,6 +25,50 @@ export class UserController {
     @repository(UserRepository)
     public userRepository: UserRepository,
   ) { }
+
+  @post('/users/login', {
+    responses: {
+      '200': {
+        description: 'User login instance',
+        content: {'application/json': {schema: {}}},
+      },
+    },
+  })
+  async login(
+    @requestBody({
+      description: 'Required input for login',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+              username: {
+                type: 'string',
+              },
+              password: {
+                type: 'string',
+              },
+            },
+          },
+        }
+      },
+    }) credential: any,
+  ): Promise<{accessToken: string, refreshToken: string}> {
+
+    const user = await this.userRepository.verifyPassword(
+      credential.username,
+      credential.password
+    );
+
+    return await this.createJWT({
+      id: user.id,
+      username: user.username,
+      first_name: user.first_name,
+      permissions: user.user_role.permissions
+    })
+  }
 
   @post('/users', {
     responses: {
@@ -62,6 +109,8 @@ export class UserController {
   }
 
   @authenticate(STRATEGY.BEARER)
+  @authorize({permissions: ["ViewAnyUser"]})
+  // @authorize(['*'])
   @get('/users', {
     responses: {
       '200': {
@@ -78,6 +127,7 @@ export class UserController {
     },
   })
   async find(
+    @param.header.string('Authorization') auth: string,
     @param.filter(User) filter?: Filter<User>,
   ): Promise<User[]> {
     return this.userRepository.find(filter);
@@ -168,5 +218,25 @@ export class UserController {
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
     await this.userRepository.deleteById(id);
+  }
+
+  private async createJWT(
+    payload: any
+  ): Promise<{accessToken: string, refreshToken: string}> {
+
+    const accessToken = jwt.sign(
+      payload,
+      process.env.JWT_SECRET as string,
+      {
+        expiresIn: '24h',
+        issuer: process.env.JWT_ISSUER,
+      },
+    );
+    const size = 32, ms = 1000;
+    const refreshToken: string = crypto.randomBytes(size).toString('hex');
+    return {
+      accessToken,
+      refreshToken
+    };
   }
 }

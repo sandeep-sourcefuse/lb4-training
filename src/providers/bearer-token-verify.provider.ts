@@ -16,7 +16,6 @@ export class BearerTokenVerifyProvider
   value(): VerifyFunction.BearerFn {
     return async (token) => {
 
-      console.log("tttttttttttt", token);
       const user = verify(token, process.env.JWT_SECRET as string, {
         issuer: process.env.JWT_ISSUER,
       }) as User;
