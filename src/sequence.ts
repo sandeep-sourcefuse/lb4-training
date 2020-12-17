@@ -64,13 +64,6 @@ export class MySequence implements SequenceHandler {
       const args = await this.parseParams(request, route);
       // request.body = args[args.length - 1];
       const authUser: User = await this.authenticateRequest(request, response);
-      console.log("authUser", authUser)
-      if (authUser) {
-        //request.body.authUser = authUser;
-      }
-
-      console.log(authUser)
-
       const isAccessAllowed: boolean = await this.checkAuthorisation(
         authUser && authUser.permissions,
         request,

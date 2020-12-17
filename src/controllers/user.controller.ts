@@ -1,8 +1,10 @@
+import {inject} from '@loopback/core';
 import {
   Count,
   CountSchema,
   Filter,
   FilterExcludingWhere,
+  Getter,
   repository,
   Where
 } from '@loopback/repository';
@@ -15,7 +17,7 @@ import {
 } from '@loopback/rest';
 import * as crypto from "crypto";
 import * as jwt from 'jsonwebtoken';
-import {authenticate, STRATEGY} from 'loopback4-authentication';
+import {authenticate, AuthenticationBindings, STRATEGY} from 'loopback4-authentication';
 import {authorize} from 'loopback4-authorization';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
@@ -24,6 +26,8 @@ export class UserController {
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
+    @inject.getter(AuthenticationBindings.CURRENT_USER)
+    private readonly getCurrentUser: Getter<User>,
   ) { }
 
   @post('/users/login', {
@@ -110,7 +114,6 @@ export class UserController {
 
   @authenticate(STRATEGY.BEARER)
   @authorize({permissions: ["ViewAnyUser"]})
-  // @authorize(['*'])
   @get('/users', {
     responses: {
       '200': {
@@ -128,8 +131,12 @@ export class UserController {
   })
   async find(
     @param.header.string('Authorization') auth: string,
-    @param.filter(User) filter?: Filter<User>,
+    @param.filter(User) filter?: Filter<User>
   ): Promise<User[]> {
+
+    // console.log(auth);
+    let user = await this.getCurrentUser();
+    // console.log(user);
     return this.userRepository.find(filter);
   }
 
